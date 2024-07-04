@@ -2,25 +2,31 @@
 City related functionality
 """
 
-from src.models.base import Base
+from sqlalchemy import Column, String, ForeignKey
+from sqlalchemy.orm import relationship
+from src import db  # Assuming `db` is your SQLAlchemy instance
 from src.models.country import Country
 
 
-class City(Base):
+class City(db.Model):
     """City representation"""
 
-    name: str
-    country_code: str
+    __tablename__ = 'city'
+
+    id = Column(String(36), primary_key=True)
+    name = Column(String(255), nullable=False)
+    country_code = Column(String(10), ForeignKey('country.code'), nullable=False)
+
+    country = relationship("Country", back_populates="cities")
 
     def __init__(self, name: str, country_code: str, **kw) -> None:
-        """Dummy init"""
+        """Initializer for the City class"""
         super().__init__(**kw)
-
         self.name = name
         self.country_code = country_code
 
     def __repr__(self) -> str:
-        """Dummy repr"""
+        """String representation of City object"""
         return f"<City {self.id} ({self.name})>"
 
     def to_dict(self) -> dict:
@@ -29,8 +35,6 @@ class City(Base):
             "id": self.id,
             "name": self.name,
             "country_code": self.country_code,
-            "created_at": self.created_at.isoformat(),
-            "updated_at": self.updated_at.isoformat(),
         }
 
     @staticmethod
@@ -43,21 +47,21 @@ class City(Base):
         if not country:
             raise ValueError("Country not found")
 
-        city = City(**data)
+        new_city = City(name=data["name"], country_code=data["country_code"])
 
-        repo.save(city)
+        repo.save(new_city)
 
-        return city
+        return new_city
 
     @staticmethod
-    def update(city_id: str, data: dict) -> "City":
+    def update(city_id: str, data: dict) -> "City | None":
         """Update an existing city"""
         from src.persistence import repo
 
-        city = City.get(city_id)
+        city = City.query.get(city_id)
 
         if not city:
-            raise ValueError("City not found")
+            return None
 
         for key, value in data.items():
             setattr(city, key, value)
@@ -65,3 +69,8 @@ class City(Base):
         repo.update(city)
 
         return city
+
+    @classmethod
+    def get_all(cls):
+        """Retrieve all cities"""
+        return cls.query.all()

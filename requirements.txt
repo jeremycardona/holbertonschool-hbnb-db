@@ -1,4 +1,13 @@
 flask
 flask-cors
-
+Flask-SQLAlchemy
+Flask-Migrate
+Flask-JWT-Extended
+Flask-Bcrypt
+pytest
+python-dotenv
 gunicorn
+requests
+psycopg2-binary
+psycopg2
+alembic

@@ -1,0 +1,20 @@
+# docker-compose.yml
+
+version: '3.8'
+services:
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+    secrets:
+      - database_url
+      - jwt_secret_key
+    environment:
+      - FLASK_ENV=production
+    volumes:
+      - .:/app
+secrets:
+  database_url:
+    external: true
+  jwt_secret_key:
+    external: true

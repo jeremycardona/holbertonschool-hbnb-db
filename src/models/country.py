@@ -1,34 +1,37 @@
 """
 Country related functionality
 """
+from sqlalchemy import Column, String, Integer
+from src import db  # Assuming `db` is your SQLAlchemy instance
 
-
-class Country:
+class Country(db.Model):
     """
     Country representation
-
-    This class does NOT inherit from Base, you can't delete or update a country
-
-    This class is used to get and list countries
+    
+    This class inherits from db.Model, allowing for full CRUD operations
     """
 
-    name: str
-    code: str
-    cities: list
+    __tablename__ = 'country'
 
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(255), nullable=False)
+    code = Column(String(10), nullable=False, unique=True)
+    cities = db.relationship('City', back_populates='country', lazy=True)
+    
     def __init__(self, name: str, code: str, **kw) -> None:
-        """Dummy init"""
+        """Initializer for the Country class"""
         super().__init__(**kw)
         self.name = name
         self.code = code
 
     def __repr__(self) -> str:
-        """Dummy repr"""
+        """String representation of Country object"""
         return f"<Country {self.code} ({self.name})>"
 
     def to_dict(self) -> dict:
-        """Returns the dictionary representation of the country"""
+        """Dictionary representation of the object"""
         return {
+            "id": self.id,
             "name": self.name,
             "code": self.code,
         }
@@ -36,27 +39,18 @@ class Country:
     @staticmethod
     def get_all() -> list["Country"]:
         """Get all countries"""
-        from src.persistence import repo
-
-        countries: list["Country"] = repo.get_all("country")
-
-        return countries
+        return Country.query.all()
 
     @staticmethod
     def get(code: str) -> "Country | None":
         """Get a country by its code"""
-        for country in Country.get_all():
-            if country.code == code:
-                return country
-        return None
+        return Country.query.filter_by(code=code).first()
 
     @staticmethod
     def create(name: str, code: str) -> "Country":
         """Create a new country"""
-        from src.persistence import repo
+        new_country = Country(name=name, code=code)
+        db.session.add(new_country)
+        db.session.commit()
+        return new_country
 
-        country = Country(name, code)
-
-        repo.save(country)
-
-        return country
